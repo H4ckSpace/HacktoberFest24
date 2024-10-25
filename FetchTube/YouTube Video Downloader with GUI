@@ -1,0 +1,70 @@
+import os
+import requests
+from pytube import YouTube
+import tkinter as tk
+from tkinter import messagebox, filedialog
+from tkinter.ttk import Progressbar
+
+# Function to validate the YouTube URL using requests
+def check_url_availability(url):
+    try:
+        response = requests.get(url)
+        if response.status_code == 200:
+            return True
+        else:
+            return False
+    except Exception as e:
+        return False
+
+# Function to download the video
+def download_video():
+    url = url_entry.get()
+    if not check_url_availability(url):
+        messagebox.showerror("Error", "Invalid or Unavailable YouTube URL!")
+        return
+    
+    save_path = filedialog.askdirectory()  # Ask user where to save the video
+    if not save_path:
+        return
+    
+    try:
+        yt = YouTube(url)
+        video_stream = yt.streams.get_by_resolution(video_quality.get())  # Get chosen resolution
+        if video_stream is None:
+            messagebox.showerror("Error", f"{video_quality.get()} resolution not available!")
+            return
+        
+        # Update status and start download
+        status_label.config(text="Downloading...")
+        video_stream.download(output_path=save_path)
+        status_label.config(text="Download complete!")
+        messagebox.showinfo("Success", f"Video downloaded successfully!\nLocation: {save_path}")
+    
+    except Exception as e:
+        messagebox.showerror("Error", f"Failed to download video.\n{e}")
+
+# Create the GUI window
+window = tk.Tk()
+window.title("YouTube Video Downloader")
+
+# URL entry
+tk.Label(window, text="YouTube Video URL:").pack(pady=10)
+url_entry = tk.Entry(window, width=50)
+url_entry.pack(pady=5)
+
+# Video quality options
+tk.Label(window, text="Select Video Quality:").pack(pady=10)
+video_quality = tk.StringVar(value="720p")
+quality_menu = tk.OptionMenu(window, video_quality, "720p", "480p", "360p", "240p")
+quality_menu.pack(pady=5)
+
+# Download button
+download_btn = tk.Button(window, text="Download Video", command=download_video)
+download_btn.pack(pady=20)
+
+# Status label
+status_label = tk.Label(window, text="")
+status_label.pack(pady=5)
+
+# Main loop
+window.mainloop()
